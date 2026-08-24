@@ -1,33 +1,41 @@
 # Webnovel Tag / Genre Predictor
 
-Predict webnovel genres and tags from a title and description using different machine learning models.
+A machine-learning system for predicting genres and tags from webnovel titles and descriptions.
+
+## Features
+
+- Multi-label genre/tag prediction
+- TF-IDF + One-vs-Rest Logistic Regression baseline
+- Automatic discovery of .pkl models
+- CLI training pipeline
+- Built-in validation and classification reports
+- FastAPI backend with a lightweight frontend
 
 ## Structure
 
 ```
 webnovel_predictor/
-├── app.py                # FastAPI app (routes + serves the frontend)
+├── app.py                # FastAPI app and API routes
 ├── src/
-│   ├── preprocessing.py  # text cleaning / tag parsing (shared by train + predict)
-│   ├── train.py          # CLI training script -> saves a .pkl bundle
-│   ├── predict.py        # runs predictions given a loaded model bundle
-│   └── registry.py       # auto-discovers models/*.pkl, loads + caches them
-├── models/                # .pkl model bundles go here
-├── data/                  # put training CSVs here (optional)
-├── notebooks/             # colab notebooks
-├── static/
-│   └── index.html         # single-page frontend
-└── requirements.txt
+│   ├── preprocessing.py  # shared text cleaning and tag parsing
+│   ├── train.py          # CLI training pipeline
+│   ├── predict.py        # prediction logic
+│   └── registry.py       # model discovery, loading, and caching
+├── models/               # trained .pkl model bundles
+├── data/                 # put training CSVs here (optional)
+├── notebooks/            # experimental colab notebooks
+├── static/               # frontend assets
+└── requirements.txt      # dependencies
 ```
 
 ## Models
 
-**Model 1**: TF-IDF + One-vs-Rest Logistic Regression multi-label classification
+**Model 1**: TF-IDF + One-vs-Rest Logistic Regression
 
 Dataset:
 
 Metadata from over 35,000 webnovels hosted on RoyalRoad.
-Scraped with [novel-metadata-scraper](https://github.com/kevbot404/novel-metadata-scraper).
+The dataset was collected using [novel-metadata-scraper](https://github.com/kevbot404/novel-metadata-scraper).
 
 Pipeline:
 
@@ -38,19 +46,19 @@ Pipeline:
 
 ## Setup
 
-1. Put your existing `.pkl` file in `models/`
-   (e.g. `models/webnovel_title_description_model.pkl`)
-2. Install deps:
+1. Install deps:
    ```
    pip install -r requirements.txt
    ```
-3. Run:
+2. Run:
    ```
    uvicorn app:app --reload
    ```
-4. Open http://127.0.0.1:8000
+3. Open http://127.0.0.1:8000
 
 ## Training from a CSV
+
+Models can be trained directly from a CSV file.
 
 ```
 python -m src.train --csv data/novels.csv --out models/webnovel_v2.pkl --min-tag-count 100
@@ -64,19 +72,18 @@ e.g. `Romance|Fantasy|Isekai`).
 | Flag              | Default      | Description                                             |
 | ----------------- | ------------ | ------------------------------------------------------- |
 | `--csv`           | _(required)_ | Path to the training CSV                                |
-| `--out`           | _(required)_ | Output path for the `.pkl` model bundle                 |
+| `--out`           | _(required)_ | Path where the `.pkl` bundle will be saved              |
 | `--test-size`     | `0.20`       | Fraction of data used for validation                    |
 | `--seed`          | `42`         | Random seed for train/test split                        |
 | `--min-tag-count` | `100`        | Minimum novel count a tag must appear in to be included |
 
-### Training Output
+### Training Example
 
-Training prints:
+Use data/novels.csv to train the model, keeping only tags that appear in at least 50 novels, and save the trained model to models/predict_v0.pkl:
 
-- Row counts after each filtering step
-- Tag frequency stats (unique tags before/after filtering, removed tags)
-- A `classification_report` (precision/recall/F1) on the held-out test set
-- The path where the model bundle was saved
+```
+python -m src.train --csv data/novels.csv --out models/predict_v0.pkl --min-tag-count 50
+```
 
 ## Frontend
 
@@ -134,10 +141,3 @@ Response:
   ]
 }
 ```
-
-## Adding a New Model
-
-1. Train or obtain a `.pkl` bundle
-2. Drop it into the `models/` directory
-3. Restart the uvicorn server
-4. The new model appears automatically in the frontend selector
