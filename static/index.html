@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Webnovel Tag Predictor</title>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 640px; margin: 40px auto; padding: 0 16px; color: #222; }
+  h1 { font-size: 1.4rem; }
+  label { display: block; margin-top: 16px; font-weight: 600; font-size: 0.9rem; }
+  select, input, textarea { width: 100%; padding: 8px; margin-top: 4px; box-sizing: border-box; font-size: 0.95rem; }
+  textarea { min-height: 100px; resize: vertical; }
+  button { margin-top: 20px; padding: 10px 18px; font-size: 0.95rem; cursor: pointer; }
+  #results { margin-top: 24px; }
+  .tag-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid #eee; }
+  .error { color: #b00020; margin-top: 16px; }
+</style>
+</head>
+<body>
+
+<h1>Webnovel Tag / Genre Predictor</h1>
+
+<label for="model">Model</label>
+<select id="model"></select>
+
+<label for="title">Title</label>
+<input id="title" type="text" placeholder="e.g. The Reincarnated Villainess">
+
+<label for="description">Description</label>
+<textarea id="description" placeholder="Paste the webnovel description here..."></textarea>
+
+<label for="threshold">Threshold (<span id="thresholdVal">0.30</span>)</label>
+<input id="threshold" type="range" min="0.05" max="0.9" step="0.05" value="0.30">
+
+<button id="predictBtn">Predict Tags</button>
+
+<div id="results"></div>
+<div id="error" class="error"></div>
+
+<script>
+const modelSelect = document.getElementById("model");
+const thresholdInput = document.getElementById("threshold");
+const thresholdVal = document.getElementById("thresholdVal");
+const results = document.getElementById("results");
+const errorBox = document.getElementById("error");
+
+thresholdInput.addEventListener("input", () => {
+  thresholdVal.textContent = thresholdInput.value;
+});
+
+async function loadModels() {
+  try {
+    const res = await fetch("/api/models");
+    if (!res.ok) throw new Error((await res.json()).detail || "Failed to load models");
+    const data = await res.json();
+    modelSelect.innerHTML = data.models.map(m => `<option value="${m}">${m}</option>`).join("");
+  } catch (e) {
+    errorBox.textContent = e.message;
+  }
+}
+
+async function predict() {
+  errorBox.textContent = "";
+  results.innerHTML = "Predicting...";
+
+  const payload = {
+    model: modelSelect.value,
+    title: document.getElementById("title").value,
+    description: document.getElementById("description").value,
+    threshold: parseFloat(thresholdInput.value),
+  };
+
+  try {
+    const res = await fetch("/api/predict", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.detail || "Prediction failed");
+
+    if (data.predictions.length === 0) {
+      results.innerHTML = "<p>No tags passed the threshold. Try lowering it.</p>";
+      return;
+    }
+
+    results.innerHTML = data.predictions
+      .map(p => `<div class="tag-row"><span>${p.tag}</span><span>${(p.probability * 100).toFixed(1)}%</span></div>`)
+      .join("");
+  } catch (e) {
+    results.innerHTML = "";
+    errorBox.textContent = e.message;
+  }
+}
+
+document.getElementById("predictBtn").addEventListener("click", predict);
+loadModels();
+</script>
+
+</body>
+</html>
