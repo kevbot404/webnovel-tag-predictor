@@ -11,6 +11,12 @@ A machine-learning system for predicting genres and tags from webnovel titles an
 - Built-in validation and classification reports
 - FastAPI backend with a lightweight frontend
 
+## Interface
+
+<p align="center">
+  <img src="interface.png" alt="Interface">
+</p>
+
 ## Structure
 
 ```
