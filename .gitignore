@@ -39,8 +39,6 @@ Thumbs.db
 models/*.pkl
 models/**
 
-data/*
-!data/.gitkeep
 notebooks/.ipynb_checkpoints/
 
 uvicorn.log
