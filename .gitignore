@@ -35,10 +35,6 @@ env/
 .DS_Store
 Thumbs.db
 
-*.pkl
-models/*.pkl
-models/**
-
 notebooks/.ipynb_checkpoints/
 
 uvicorn.log
