@@ -29,7 +29,6 @@ webnovel_predictor/
 │   └── registry.py       # model discovery, loading, and caching
 ├── models/               # trained .pkl model bundles
 ├── data/                 # put training CSVs here (optional)
-├── notebooks/            # experimental colab notebooks
 ├── static/               # frontend assets
 └── requirements.txt      # dependencies
 ```
