@@ -14,8 +14,20 @@ A machine-learning system for predicting genres and tags from webnovel titles an
 ## Interface
 
 <p align="center">
-  <img src="interface.png" alt="Interface" style="width: 75%;">
+  <img src="interface.png" alt="Interface" style="width: 85%;">
 </p>
+
+## Setup
+
+1. Install deps:
+   ```
+   pip install -r requirements.txt
+   ```
+2. Run:
+   ```
+   uvicorn app:app --reload
+   ```
+3. Open http://127.0.0.1:8000
 
 ## Structure
 
@@ -48,18 +60,6 @@ Pipeline:
 2. **Feature extraction**: TF-IDF vectorization with n-grams (1-3), sublinear TF scaling, and a vocabulary cap of 100,000 features.
 3. **Classification**: Each tag/genre gets its own binary classifier. A threshold (default 0.30) controls how confident the model must be before predicting a tag.
 4. **Model bundle**: The trained vectorizer, classifier, label binarizer, and genre list are saved together as a single `.pkl` file.
-
-## Setup
-
-1. Install deps:
-   ```
-   pip install -r requirements.txt
-   ```
-2. Run:
-   ```
-   uvicorn app:app --reload
-   ```
-3. Open http://127.0.0.1:8000
 
 ## Training from a CSV
 
