@@ -31,6 +31,7 @@ def load_and_clean(csv_path: str, min_tag_count: int = 100,) -> pd.DataFrame:
     df = pd.read_csv(csv_path)
     df = df[["title", "description", "tags"]].copy()
     df = df.dropna(subset=["title", "description", "tags"])
+    df = df[df["description"].str.strip().str.len() >= 10].copy()
 
     df["title"] = df["title"].astype(str)
     df["description"] = df["description"].astype(str)
@@ -95,9 +96,7 @@ def load_and_clean(csv_path: str, min_tag_count: int = 100,) -> pd.DataFrame:
     )
 
     # remove rows with no tags after frequency filtering
-    df = df[
-        df["tag_list"].apply(len) > 0
-    ].copy()
+    df = df[df["tag_list"].apply(len) > 0].copy()
 
     print("\nRows after frequency filtering:", len(df))
 
@@ -148,8 +147,7 @@ def train(
 
     model = OneVsRestClassifier(
         LogisticRegression(
-            max_iter=2000,
-            class_weight="balanced"
+            max_iter=2000
         ), n_jobs=-1
     )
 
