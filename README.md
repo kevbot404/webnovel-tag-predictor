@@ -8,7 +8,6 @@ A machine-learning system for predicting genres and tags from webnovel titles an
 - TF-IDF + One-vs-Rest Logistic Regression baseline
 - Automatic discovery of .pkl models
 - CLI training pipeline
-- Built-in validation and classification reports
 - FastAPI backend with a lightweight frontend
 
 ## Interface
