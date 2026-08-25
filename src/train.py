@@ -147,7 +147,8 @@ def train(
 
     model = OneVsRestClassifier(
         LogisticRegression(
-            max_iter=2000
+            max_iter=2000,
+            class_weight="balanced"
         ), n_jobs=-1
     )
 

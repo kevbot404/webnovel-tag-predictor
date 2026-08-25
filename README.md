@@ -51,7 +51,7 @@ webnovel_predictor/
 
 Dataset:
 
-Metadata from over 50,000 webnovels hosted on RoyalRoad.
+Metadata (titles,summaries,genres) from over 60,000 webnovels hosted on RoyalRoad.
 The dataset was collected using [novel-metadata-scraper](https://github.com/kevbot404/novel-metadata-scraper).
 
 Pipeline:
