@@ -14,7 +14,7 @@ A machine-learning system for predicting genres and tags from webnovel titles an
 ## Interface
 
 <p align="center">
-  <img src="interface.png" alt="Interface">
+  <img src="interface.png" alt="Interface" style="width: 75%;">
 </p>
 
 ## Structure
