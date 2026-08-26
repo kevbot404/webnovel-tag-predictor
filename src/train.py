@@ -21,14 +21,20 @@ from sklearn.metrics import classification_report
 
 from .preprocessing import (
     contains_non_english_characters,
-    clean_title,
-    clean_description,
-    parse_tags,
+    clean_dataframe,
 )
 
 
-def load_and_clean(csv_path: str, min_tag_count: int = 100,) -> pd.DataFrame:
+def load(csv_path: str) -> pd.DataFrame:
     df = pd.read_csv(csv_path)
+
+    print("\n================================================")
+    print("BASE CSV")
+    print("================================================")
+    print("Path:", csv_path)
+    print("Rows in raw CSV:", len(df))
+    print("Columns in raw CSV:", list(df.columns))
+
     df = df[["title", "description", "tags"]].copy()
     df = df.dropna(subset=["title", "description", "tags"])
     df = df[df["description"].str.strip().str.len() >= 10].copy()
@@ -41,64 +47,7 @@ def load_and_clean(csv_path: str, min_tag_count: int = 100,) -> pd.DataFrame:
     non_en_desc = df["description"].apply(contains_non_english_characters)
     df = df[~non_en_title & ~non_en_desc].copy()
 
-    df["clean_title"] = df["title"].apply(clean_title)
-    df["clean_description"] = df["description"].apply(clean_description)
-    df["clean_text"] = (
-        df["clean_title"] + " " + df["clean_title"] + " " + df["clean_title"]
-        + " " + df["clean_description"]
-    )
-
-    df["tag_list"] = df["tags"].apply(parse_tags)
-    df = df[df["tag_list"].apply(len) > 0].copy()
-
-    print(f"Rows with usable tags before frequency filtering: {len(df)}")
-
-    # remove tags/genres with fewer than min_tag_count mentions
-    tag_counts = {}
-
-    for tags in df["tag_list"]:
-        # count each tag only once per novel
-        for tag in set(tags):
-            tag_counts[tag] = tag_counts.get(tag, 0) + 1
-
-    allowed_tags = {
-        tag
-        for tag, count in tag_counts.items()
-        if count >= min_tag_count
-    }
-
-    print("\n================================================")
-    print("TAG / GENRE FREQUENCY FILTER")
-    print("================================================")
-
-    print("Minimum amount required:", min_tag_count)
-    print("Unique tags/genres before filtering:", len(tag_counts))
-    print("Unique tags/genres after filtering:", len(allowed_tags))
-
-    removed_tags = sorted(
-        tag
-        for tag, count in tag_counts.items()
-        if count < min_tag_count
-    )
-
-    print("\nRemoved tags/genres:")
-
-    for tag in removed_tags:
-        print(f"{tag:30} {tag_counts[tag]}")
-
-    # remove low-frequency tags from each novel
-    df["tag_list"] = df["tag_list"].apply(
-        lambda tags: [
-            tag
-            for tag in tags
-            if tag in allowed_tags
-        ]
-    )
-
-    # remove rows with no tags after frequency filtering
-    df = df[df["tag_list"].apply(len) > 0].copy()
-
-    print("\nRows after frequency filtering:", len(df))
+    print("Rows after dropna/min-length/non-english filtering:", len(df))
 
     return df
 
@@ -110,7 +59,8 @@ def train(
     seed: int = 42,
     min_tag_count: int = 100,
 ):
-    df = load_and_clean(csv_path, min_tag_count=min_tag_count,)
+    df = load(csv_path)
+    df = clean_dataframe(df, min_tag_count=min_tag_count)
 
     print(f"\nRows after cleaning: {len(df)}")
 
@@ -135,6 +85,14 @@ def train(
         random_state=seed
     )
 
+    print("\n================================================")
+    print("TRAIN / TEST SPLIT")
+    print("================================================")
+    print("Test size fraction:", test_size)
+    print("Random seed:", seed)
+    print("Training rows:", len(X_train))
+    print("Test rows:", len(X_test))
+
     vectorizer = TfidfVectorizer(
         ngram_range=(1, 3),
         min_df=2,
@@ -145,6 +103,13 @@ def train(
     X_train_tfidf = vectorizer.fit_transform(X_train)
     X_test_tfidf = vectorizer.transform(X_test)
 
+    print("\n================================================")
+    print("VECTORIZATION")
+    print("================================================")
+    print("Vocabulary size:", len(vectorizer.vocabulary_))
+    print("Train matrix shape:", X_train_tfidf.shape)
+    print("Test matrix shape:", X_test_tfidf.shape)
+
     model = OneVsRestClassifier(
         LogisticRegression(
             max_iter=2000,
@@ -152,6 +117,9 @@ def train(
         ), n_jobs=-1
     )
 
+    print("\n================================================")
+    print("TRAINING")
+    print("================================================")
     print("Training...")
 
     model.fit(X_train_tfidf, y_train)
