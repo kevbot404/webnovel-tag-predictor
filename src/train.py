@@ -12,7 +12,7 @@ import argparse
 import joblib
 import pandas as pd
 
-from sklearn.model_selection import train_test_split
+from iterstrat.ml_stratifiers import MultilabelStratifiedShuffleSplit
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.preprocessing import MultiLabelBinarizer
 from sklearn.multiclass import OneVsRestClassifier
@@ -78,17 +78,27 @@ def train(
 
     Y = mlb.fit_transform(df["tag_list"])
 
-    X_train, X_test, y_train, y_test = train_test_split(
-        df["clean_text"],
-        Y,
+    X_all = df["clean_text"].values.reshape(-1, 1)
+
+    # MultilabelStratifiedShuffleSplit (iterative-stratification package)
+    # is a numpy-vectorized implementation so it stays fast on large datasets
+    msss = MultilabelStratifiedShuffleSplit(
+        n_splits=1,
         test_size=test_size,
         random_state=seed
     )
+    train_idx, test_idx = next(msss.split(X_all, Y))
+
+    X_train = X_all[train_idx].ravel()
+    X_test = X_all[test_idx].ravel()
+    y_train = Y[train_idx]
+    y_test = Y[test_idx]
 
     print("\n================================================")
     print("TRAIN / TEST SPLIT")
     print("================================================")
     print("Test size fraction:", test_size)
+    print("Split method: MultilabelStratifiedShuffleSplit (multi-label stratified)")
     print("Random seed:", seed)
     print("Training rows:", len(X_train))
     print("Test rows:", len(X_test))
