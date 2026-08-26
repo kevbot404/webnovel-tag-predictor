@@ -31,7 +31,7 @@ A machine-learning system for predicting genres and tags from webnovel titles an
 ## Structure
 
 ```
-webnovel_predictor/
+webnovel-tag-predictor/
 ├── app.py                # FastAPI app and API routes
 ├── src/
 │   ├── preprocessing.py  # shared text cleaning and tag parsing
@@ -55,10 +55,11 @@ The dataset was collected using [novel-metadata-scraper](https://github.com/kevb
 
 Pipeline:
 
-1. **Text preprocessing**: Titles and descriptions are cleaned (lowercased, URLs removed, punctuation stripped). The title is repeated 3x during feature construction to give it more weight than the description.
-2. **Feature extraction**: TF-IDF vectorization with n-grams (1-3), sublinear TF scaling, and a vocabulary cap of 100,000 features.
-3. **Classification**: Each tag/genre gets its own binary classifier. A threshold (default 0.30) controls how confident the model must be before predicting a tag.
-4. **Model bundle**: The trained vectorizer, classifier, label binarizer, and genre list are saved together as a single `.pkl` file.
+1. **Text preprocessing**: Titles and descriptions are cleaned (lowercased, URLs removed, punctuation stripped, non-English text filtered out). The title is repeated 3x during feature construction to give it more weight than the description.
+2. **Feature extraction**: TF-IDF vectorization with n-grams (1-3), sublinear TF scaling, `min_df=2`, and a vocabulary cap of 100,000 features.
+3. **Classification**: Each tag/genre gets its own binary classifier (`OneVsRestClassifier` wrapping a balanced `LogisticRegression` with `max_iter=2000`). A threshold (default 0.30) controls how confident the model must be before predicting a tag.
+4. **Train/test split**: Uses `MultilabelStratifiedShuffleSplit` to preserve tag distribution in both splits.
+5. **Model bundle**: The trained vectorizer, classifier, label binarizer (`MultiLabelBinarizer`), and genre list are saved together as a single `.pkl` file.
 
 ## Training from a CSV
 
@@ -67,6 +68,8 @@ Models can be trained directly from a CSV file.
 ```
 python -m src.train --csv data/novels.csv --out models/webnovel_v2.pkl --min-tag-count 100
 ```
+
+Example: Use data/novels.csv to train the model, keeping only tags that appear in at least 100 novels (rows), and save the trained model to models/webnovel_v2.pkl:
 
 The CSV needs `title`, `description`, `tags` columns (tags pipe-separated,
 e.g. `Romance|Fantasy|Isekai`).
@@ -80,14 +83,6 @@ e.g. `Romance|Fantasy|Isekai`).
 | `--test-size`     | `0.20`       | Fraction of data used for validation                    |
 | `--seed`          | `42`         | Random seed for train/test split                        |
 | `--min-tag-count` | `100`        | Minimum novel count a tag must appear in to be included |
-
-### Training Example
-
-Use data/novels.csv to train the model, keeping only tags that appear in at least 50 novels, and save the trained model to models/predict_v0.pkl:
-
-```
-python -m src.train --csv data/novels.csv --out models/predict_v0.pkl --min-tag-count 50
-```
 
 ## Frontend
 
