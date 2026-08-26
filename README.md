@@ -46,16 +46,30 @@ webnovel-tag-predictor/
 
 ## Models
 
-**Model 1**: TF-IDF + One-vs-Rest Logistic Regression
+**Model 1**: TF-IDF + One-vs-Rest Logistic Regression v1
 
 Dataset:
 
-Metadata (titles,summaries,genres) from over 60,000 webnovels hosted on RoyalRoad.
-The dataset was collected using [novel-metadata-scraper](https://github.com/kevbot404/novel-metadata-scraper).
+Metadata (titles,summaries,genres) from ~60,000 webnovels hosted on RoyalRoad. The dataset was collected using [novel-metadata-scraper](https://github.com/kevbot404/novel-metadata-scraper).
 
 Pipeline:
 
 1. **Text preprocessing**: Titles and descriptions are cleaned (lowercased, URLs removed, punctuation stripped, non-English text filtered out). The title is repeated 3x during feature construction to give it more weight than the description.
+2. **Feature extraction**: TF-IDF vectorization with n-grams (1-3), sublinear TF scaling, `min_df=2`, and a vocabulary cap of 100,000 features.
+3. **Classification**: Each tag/genre gets its own binary classifier. A threshold (default 0.30) controls how confident the model must be before predicting a tag.
+4. **Train/test split**: Simple 80/20 split.
+5. **Model bundle**: The trained vectorizer, classifier, label binarizer (`MultiLabelBinarizer`), and genre list are saved together as a single `.pkl` file.
+
+**Model 2**: TF-IDF + One-vs-Rest Logistic Regression v2
+
+Dataset:
+
+Metadata (titles,summaries,genres) from ~150,000 webnovels hosted on RoyalRoad.
+The dataset was collected using [novel-metadata-scraper](https://github.com/kevbot404/novel-metadata-scraper).
+
+Pipeline:
+
+1. **Text preprocessing**: Titles and descriptions are cleaned (lowercased, URLs removed, punctuation stripped, non-English text filtered out). Improved data cleaning from v1. The title is repeated 3x during feature construction to give it more weight than the description. Minimum tag count set to 1500.
 2. **Feature extraction**: TF-IDF vectorization with n-grams (1-3), sublinear TF scaling, `min_df=2`, and a vocabulary cap of 100,000 features.
 3. **Classification**: Each tag/genre gets its own binary classifier (`OneVsRestClassifier` wrapping a balanced `LogisticRegression` with `max_iter=2000`). A threshold (default 0.30) controls how confident the model must be before predicting a tag.
 4. **Train/test split**: Uses `MultilabelStratifiedShuffleSplit` to preserve tag distribution in both splits.
