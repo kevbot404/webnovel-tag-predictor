@@ -18,6 +18,10 @@ def _clean(text: str) -> str:
     text = text.lower()
     # remove URLs
     text = re.sub(r"https?://\S+", " ", text)
+    # remove HTML tags (e.g. leftover <div>, <br>, decorative <----- bars)
+    text = re.sub(r"<[^>]+>", " ", text)
+    # remove HTML entities (e.g. &amp; &quot; &#39;)
+    text = re.sub(r"&\w+;|&#\d+;", " ", text)
     # strip punctuation
     text = re.sub(r"[^a-z0-9\s]", " ", text)
     # collapse whitespace
@@ -45,8 +49,40 @@ def parse_tags(tags: str) -> list[str]:
     return [t.strip() for t in str(tags).split("|") if t.strip()]
 
 
-def clean_dataframe(df: pd.DataFrame, min_tag_count: int = 100) -> pd.DataFrame:
-    """Apply text cleaning + tag parsing/frequency filtering to a loaded dataframe."""
+def clean_dataframe(df: pd.DataFrame, min_tag_count: int = 100, min_description_length: int = 40,) -> pd.DataFrame:
+    """Apply column selection + text cleaning + tag parsing/frequency filtering
+    to a raw, just-loaded dataframe."""
+
+    # keep only the columns the model needs
+    df = df[["title", "description", "tags"]].copy()
+
+    # drop rows with missing title/description/tags
+    before = len(df)
+    df = df.dropna(subset=["title", "description", "tags"]).copy()
+    print(f"Rows dropped for missing title/description/tags: {before - len(df)}")
+
+    df["title"] = df["title"].astype(str)
+    df["description"] = df["description"].astype(str)
+    df["tags"] = df["tags"].astype(str)
+
+    # drop exact duplicate (title, description) pairs
+    before = len(df)
+    df = df.drop_duplicates(subset=["title", "description"]).copy()
+    print(f"Rows dropped as duplicate title+description: {before - len(df)}")
+
+    # drop placeholder/junk descriptions ("Please delete, thx.", ".", "Dropped.", etc.)
+    before = len(df)
+    df = df[df["description"].str.strip().str.len() >= min_description_length].copy()
+    print(f"Rows dropped for too-short/placeholder description: {before - len(df)}")
+
+    # drop non-English titles/descriptions
+    before = len(df)
+    is_non_english = df["title"].apply(contains_non_english_characters) | df[
+        "description"
+    ].apply(contains_non_english_characters)
+    df = df[~is_non_english].copy()
+    print(f"Rows dropped for non-English title/description: {before - len(df)}")
+
     df["clean_title"] = df["title"].apply(clean_title)
     df["clean_description"] = df["description"].apply(clean_description)
     df["clean_text"] = (
@@ -103,7 +139,5 @@ def clean_dataframe(df: pd.DataFrame, min_tag_count: int = 100) -> pd.DataFrame:
 
     # remove rows with no tags after frequency filtering
     df = df[df["tag_list"].apply(len) > 0].copy()
-
-    print("\nRows after frequency filtering:", len(df))
 
     return df

@@ -19,10 +19,7 @@ from sklearn.multiclass import OneVsRestClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import classification_report
 
-from .preprocessing import (
-    contains_non_english_characters,
-    clean_dataframe,
-)
+from .preprocessing import clean_dataframe
 
 
 def load(csv_path: str) -> pd.DataFrame:
@@ -34,20 +31,6 @@ def load(csv_path: str) -> pd.DataFrame:
     print("Path:", csv_path)
     print("Rows in raw CSV:", len(df))
     print("Columns in raw CSV:", list(df.columns))
-
-    df = df[["title", "description", "tags"]].copy()
-    df = df.dropna(subset=["title", "description", "tags"])
-    df = df[df["description"].str.strip().str.len() >= 10].copy()
-
-    df["title"] = df["title"].astype(str)
-    df["description"] = df["description"].astype(str)
-    df["tags"] = df["tags"].astype(str)
-
-    non_en_title = df["title"].apply(contains_non_english_characters)
-    non_en_desc = df["description"].apply(contains_non_english_characters)
-    df = df[~non_en_title & ~non_en_desc].copy()
-
-    print("Rows after dropna/min-length/non-english filtering:", len(df))
 
     return df
 
