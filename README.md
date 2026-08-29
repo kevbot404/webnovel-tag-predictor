@@ -24,7 +24,7 @@ A machine-learning system for predicting genres and tags from webnovel titles an
    ```
 2. Run:
    ```
-   uvicorn app:app --reload
+   python uvicorn app:app --reload
    ```
 3. Open http://127.0.0.1:8000
 
