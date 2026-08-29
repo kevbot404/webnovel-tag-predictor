@@ -111,7 +111,7 @@ The single-page frontend at `http://127.0.0.1:8000` provides:
 ### Tips for Good Results
 
 - **Provide both title and description** for the most accurate predictions
-- **Only use English characters** to not get garbage confidence scores
+- **Only use English characters** to get better confidence scores
 - **Lower the threshold** if no tags are returned (try 0.15-0.20)
 - **Raise the threshold** if too many low-confidence tags are shown
 - Train on a **larger, high-quality dataset** for better genre coverage
